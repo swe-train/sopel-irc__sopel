@@ -19,7 +19,7 @@ from sopel.tools import web
 PLUGIN_OUTPUT_PREFIX = '[search] '
 
 header_spoof = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36'
 }
 r_bing = re.compile(r'<li(?: class="b_algo")?><h2><a href="([^"]+)"')
 r_duck = re.compile(r'nofollow" class="[^"]+" href="(?!(?:https?:\/\/r\.search\.yahoo)|(?:https?:\/\/duckduckgo\.com\/y\.js)(?:\/l\/\?kh=-1&amp;uddg=))(.*?)">')
@@ -122,7 +122,12 @@ def duck(bot, trigger):
 
 
 @plugin.command('bing')
-@plugin.example('.bing sopel.chat irc bot')
+@plugin.example(
+    '.bing sopel.chat irc bot',
+    r'https?://sopel\.chat.*',
+    re=True,
+    online=True,
+    vcr=True)
 @plugin.output_prefix(PLUGIN_OUTPUT_PREFIX)
 def bing(bot, trigger):
     """Queries Bing for the specified input."""
