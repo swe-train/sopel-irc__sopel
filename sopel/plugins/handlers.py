@@ -44,7 +44,6 @@ away from the rest of the application.
 from __future__ import generator_stop
 
 import abc
-import imp
 import importlib
 import inspect
 import itertools
@@ -52,13 +51,6 @@ import os
 
 from sopel import loader
 from . import exceptions
-
-try:
-    reload = importlib.reload
-except AttributeError:
-    # py2: no reload function
-    # TODO: imp is deprecated, to be removed when py2 support is dropped
-    reload = imp.reload
 
 
 class AbstractPluginHandler(abc.ABC):
@@ -303,7 +295,7 @@ class PyModulePlugin(AbstractPluginHandler):
 
         This method assumes the plugin is already loaded.
         """
-        self._module = reload(self._module)
+        self._module = importlib.reload(self._module)
 
     def is_loaded(self):
         return self._module is not None
@@ -404,45 +396,25 @@ class PyFilePlugin(PyModulePlugin):
 
         if good_file:
             name = os.path.basename(filename)[:-3]
-            module_type = imp.PY_SOURCE
+            self.path = filename
+            self.filename = filename
         elif good_dir:
             name = os.path.basename(filename)
-            module_type = imp.PKG_DIRECTORY
+            self.path = filename
+            self.filename = os.path.join(filename, '__init__.py')
         else:
             raise exceptions.PluginError('Invalid Sopel plugin: %s' % filename)
-
-        self.filename = filename
-        self.path = filename
-        self.module_type = module_type
 
         super().__init__(name)
 
     def _load(self):
-        # The current implementation uses `imp.load_module` to perform the
-        # load action, which also reloads the module. However, `imp` is
-        # deprecated in Python 3, so that might need to be changed when the
-        # support for Python 2 is dropped.
-        #
-        # However, the solution for Python 3 is non-trivial, since the
-        # `importlib` built-in module does not have a similar function,
-        # therefore requires to dive into its public internals
-        # (``importlib.machinery`` and ``importlib.util``).
-        #
-        # All of that is doable, but represents a lot of work. As long as
-        # Python 2 is supported, we can keep it for now.
-        #
-        # TODO: switch to ``importlib`` when Python2 support is dropped.
-        if self.module_type == imp.PY_SOURCE:
-            with open(self.path) as mod:
-                description = ('.py', 'U', self.module_type)
-                mod = imp.load_module(self.name, mod, self.path, description)
-        elif self.module_type == imp.PKG_DIRECTORY:
-            description = ('', '', self.module_type)
-            mod = imp.load_module(self.name, None, self.path, description)
-        else:
-            raise TypeError('Unsupported module type')
+        # basically the example code from
+        # https://docs.python.org/3.7/library/importlib.html#importing-a-source-file-directly
+        spec = importlib.util.spec_from_file_location(self.name, self.filename)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
 
-        return mod
+        return module
 
     def get_meta_description(self):
         """Retrieve a meta description for the plugin.
