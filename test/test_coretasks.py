@@ -694,10 +694,10 @@ def test_handle_setname(mockbot):
     # have the user change their realname
     mockbot.on_message(
         ':Internets!internets@services.irc.network '
-        'SETNAME :Bot de Network Services'
+        'SETNAME :Bot du service réseau'
     )
 
-    assert mockbot.users['Internets'].realname == 'Bot de Network Services'
+    assert mockbot.users['Internets'].realname == 'Bot du service réseau'
 
     # change user's realname again to something not requiring a colon
     # (this corresponds to an example specifically shown in the `setname` spec)
