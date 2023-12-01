@@ -675,3 +675,35 @@ def test_handle_who_reply_botmode(mockbot):
         ':End of /WHO list.')
 
     assert mockbot.users['Internets'].is_bot is True
+
+
+def test_handle_setname(mockbot):
+    """Make sure Sopel updates user's realname from SETNAME message"""
+    # add one user
+    mockbot.on_message(
+        ':some.irc.network 352 Sopel #channel '
+        'internets services.irc.network * Internets Hr* '
+        ':0 Network Services Bot')
+    mockbot.on_message(
+        ':some.irc.network 315 Sopel #channel '
+        ':End of /WHO list.')
+
+    assert 'Internets' in mockbot.users
+    assert mockbot.users['Internets'].realname == 'Network Services Bot'
+
+    # have the user change their realname
+    mockbot.on_message(
+        ':Internets!internets@services.irc.network '
+        'SETNAME :Bot de Network Services'
+    )
+
+    assert mockbot.users['Internets'].realname == 'Bot de Network Services'
+
+    # change user's realname again to something not requiring a colon
+    # (this corresponds to an example specifically shown in the `setname` spec)
+    mockbot.on_message(
+        ':Internets!internets@services.irc.network '
+        'SETNAME ServiceBot'
+    )
+
+    assert mockbot.users['Internets'].realname == 'ServiceBot'
